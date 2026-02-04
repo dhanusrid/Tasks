@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Phonebook</title>
+  <link rel="stylesheet" href="style.css"> 
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    input, button { margin: 5px; padding: 6px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 15px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background-color: #f2f2f2; }
+  </style>
+  <script src="script.js"></script>
+</head>
+<body>
+  <h2>Phonebook App 📞</h2>
+    <input type="text" id="search" placeholder="Search by name" onkeyup="searchContact()">
+  <br>
+
+  <input type="text" id="name" placeholder="Name">
+  <input type="text" id="phone" placeholder="Phone">
+  <input type="email" id="email" placeholder="Email">
+  <button onclick="addContact()">Add Contact</button>
+
+  <br><br>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Phone</th>
+        <th>Email</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="contactTable"></tbody>
+  </table>
+
+<script>
+  let contacts = [];
+
+  function addContact() {
+    let name = document.getElementById("name").value;
+    let phone = document.getElementById("phone").value;
+    let email = document.getElementById("email").value;
+
+    if (name === "" || phone === "" || email === "") {
+      alert("Please fill all fields");
+      return;
+    }
+
+    contacts.push({ name, phone, email });
+    displayContacts(contacts);
+
+    document.getElementById("name").value = "";
+    document.getElementById("phone").value = "";
+    document.getElementById("email").value = "";
+  }
+
+  function displayContacts(list) {
+    let table = document.getElementById("contactTable");
+    table.innerHTML = "";
+
+    list.forEach((contact, index) => {
+      table.innerHTML += `
+        <tr>
+          <td>${contact.name}</td>
+          <td>${contact.phone}</td>
+          <td>${contact.email}</td>
+          <td><button onclick="deleteContact(${index})">Delete</button></td>
+        </tr>
+      `;
+    });
+  }
+
+  function searchContact() {
+    let searchValue = document.getElementById("search").value.toLowerCase();
+    let filteredContacts = contacts.filter(contact =>
+      contact.name.toLowerCase().includes(searchValue)
+    );
+    displayContacts(filteredContacts);
+  }
+
+  function deleteContact(index) {
+    contacts.splice(index, 1);
+    displayContacts(contacts);
+  }
+</script>
+</body >
+ 
+</html>
