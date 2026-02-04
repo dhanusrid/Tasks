@@ -1,91 +1,207 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Phonebook</title>
-  <link rel="stylesheet" href="style.css"> 
+  <meta charset="UTF-8" />
+  <title>Expense Report Tracker</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    input, button { margin: 5px; padding: 6px; }
-    table { border-collapse: collapse; width: 100%; margin-top: 15px; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-    th { background-color: #f2f2f2; }
-  </style>
-  <script src="script.js"></script>
-</head>
-<body>
-  <h2>Phonebook App 📞</h2>
-    <input type="text" id="search" placeholder="Search by name" onkeyup="searchContact()">
-  <br>
-
-  <input type="text" id="name" placeholder="Name">
-  <input type="text" id="phone" placeholder="Phone">
-  <input type="email" id="email" placeholder="Email">
-  <button onclick="addContact()">Add Contact</button>
-
-  <br><br>
-  <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Phone</th>
-        <th>Email</th>
-        <th>Action</th>
-      </tr>
-    </thead>
-    <tbody id="contactTable"></tbody>
-  </table>
-
-<script>
-  let contacts = [];
-
-  function addContact() {
-    let name = document.getElementById("name").value;
-    let phone = document.getElementById("phone").value;
-    let email = document.getElementById("email").value;
-
-    if (name === "" || phone === "" || email === "") {
-      alert("Please fill all fields");
-      return;
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      padding: 20px;
     }
 
-    contacts.push({ name, phone, email });
-    displayContacts(contacts);
+    h1 {
+      text-align: center;
+    }
 
-    document.getElementById("name").value = "";
-    document.getElementById("phone").value = "";
-    document.getElementById("email").value = "";
-  }
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
 
-  function displayContacts(list) {
-    let table = document.getElementById("contactTable");
-    table.innerHTML = "";
+    input, select, button {
+      padding: 8px;
+      margin: 5px;
+    }
 
-    list.forEach((contact, index) => {
-      table.innerHTML += `
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+    }
+
+    th {
+      background: #eaeaea;
+    }
+
+    canvas {
+      margin-top: 20px;
+      border: 1px solid #ccc;
+    }
+
+    .summary {
+      margin-top: 15px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Expense Report Tracker</h1>
+
+  <div class="container">
+    <h3>Add Expense</h3>
+    <input type="text" id="title" placeholder="Expense Title" />
+    <input type="number" id="amount" placeholder="Amount" />
+    
+    <select id="category">
+      <option value="Food">Food</option>
+      <option value="Travel">Travel</option>
+      <option value="Stationery">Stationery</option>
+      <option value="Other">Other</option>
+    </select>
+
+    <input type="date" id="date" />
+    <button onclick="addExpense()">Add</button>
+
+    <h3>Expenses List</h3>
+    <table>
+      <thead>
         <tr>
-          <td>${contact.name}</td>
-          <td>${contact.phone}</td>
-          <td>${contact.email}</td>
-          <td><button onclick="deleteContact(${index})">Delete</button></td>
+          <th>Title</th>
+          <th>Amount</th>
+          <th>Category</th>
+          <th>Date</th>
+          <th>Delete</th>
         </tr>
-      `;
-    });
-  }
+      </thead>
+      <tbody id="expenseTable"></tbody>
+    </table>
 
-  function searchContact() {
-    let searchValue = document.getElementById("search").value.toLowerCase();
-    let filteredContacts = contacts.filter(contact =>
-      contact.name.toLowerCase().includes(searchValue)
-    );
-    displayContacts(filteredContacts);
-  }
+    <div class="summary" id="totalDisplay">Total: ₹0</div>
 
-  function deleteContact(index) {
-    contacts.splice(index, 1);
-    displayContacts(contacts);
-  }
-</script>
-</body >
- 
+    <canvas id="chart" width="600" height="300"></canvas>
+  </div>
+
+  <script>
+    
+    class Expense {
+      constructor(title, amount, category, date) {
+        this.title = title;
+        this.amount = amount;
+        this.category = category;
+        this.date = date;
+      }
+    }
+
+    let expenses = JSON.parse(localStorage.getItem("expenses")) || [];
+
+    function saveExpenses() {
+      localStorage.setItem("expenses", JSON.stringify(expenses));
+    }
+
+    function addExpense() {
+      const title = document.getElementById("title").value;
+      const amount = parseFloat(document.getElementById("amount").value);
+      const category = document.getElementById("category").value;
+      const date = document.getElementById("date").value;
+
+      if (!title || !amount || !date) {
+        alert("Please fill all fields");
+        return;
+      }
+
+      const expense = new Expense(title, amount, category, date);
+      expenses.push(expense);
+
+      saveExpenses();
+      renderTable();
+      drawChart();
+
+      document.getElementById("title").value = "";
+      document.getElementById("amount").value = "";
+      document.getElementById("date").value = "";
+    }
+
+    function deleteExpense(index) {
+      expenses.splice(index, 1);
+      saveExpenses();
+      renderTable();
+      drawChart();
+    }
+
+    function renderTable() {
+      const table = document.getElementById("expenseTable");
+      table.innerHTML = "";
+
+      let total = 0;
+
+      expenses.forEach((exp, index) => {
+        total += exp.amount;
+
+        const row = `
+          <tr>
+            <td>${exp.title}</td>
+            <td>₹${exp.amount}</td>
+            <td>${exp.category}</td>
+            <td>${exp.date}</td>
+            <td><button onclick="deleteExpense(${index})">X</button></td>
+          </tr>
+        `;
+        table.innerHTML += row;
+      });
+
+      document.getElementById("totalDisplay").innerText = "Total: ₹" + total;
+    }
+
+   
+    function getCategoryTotals() {
+      const categories = ["Food", "Travel", "Stationery", "Other"];
+      return categories.map(cat => {
+        const total = expenses
+          .filter(e => e.category === cat)
+          .reduce((sum, e) => sum + e.amount, 0);
+        return total;
+      });
+    }
+    function drawChart() {
+      const canvas = document.getElementById("chart");
+      const ctx = canvas.getContext("2d");
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const data = getCategoryTotals();
+      const labels = ["Food", "Travel", "Stationery", "Other"];
+      const colors = ["red", "blue", "green", "orange"];
+
+      const barWidth = 80;
+      const maxHeight = Math.max(...data, 1);
+
+      data.forEach((value, index) => {
+        const height = (value / maxHeight) * 200;
+
+        ctx.fillStyle = colors[index];
+        ctx.fillRect(100 + index * 120, 250 - height, barWidth, height);
+
+        ctx.fillStyle = "black";
+        ctx.fillText(labels[index], 100 + index * 120, 270);
+        ctx.fillText("₹" + value, 100 + index * 120, 240 - height);
+      });
+    }
+
+    renderTable();
+    drawChart();
+  </script>
+
+</body>
 </html>
